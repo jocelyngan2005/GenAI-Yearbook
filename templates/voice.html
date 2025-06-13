@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-black text-white min-h-screen">
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white min-h-screen animate-gradientBG">
     <nav class="p-6 flex items-center">
         <a href="/" class="flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full text-white font-semibold transition">
             <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
@@ -18,19 +18,21 @@
         <!-- Progress Bar -->
         <div class="flex items-center justify-center mb-8">
             <div class="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-2 bg-purple-500" style="width: 66%"></div>
+                <div class="h-2 bg-purple-500 animate-pulse" style="width: 66%"></div>
             </div>
-            <span class="ml-4 text-sm text-purple-300">Step 2 of 3</span>
+            <span class="ml-4 text-lg text-purple-300 font-bold tracking-wide">Step 2 of 3</span>
         </div>
-        <h1 class="text-4xl font-bold text-center mb-8">Your Voice, Your Sound</h1>
-        
-        <div class="max-w-4xl mx-auto bg-gray-900 rounded-lg p-6">
-            <!-- Voice Recording Section -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Record Your Voice</h2>
+        <h1 class="text-5xl font-extrabold text-center mb-10 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">Your Voice, Your Sound</h1>
+        <div class="max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-3xl shadow-2xl p-10">
+            <!-- Voice Recording/Upload Section -->
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    Record or Upload Your Voice
+                </h2>
                 <div class="space-y-4">
-                    <div class="flex items-center space-x-4">
-                        <button id="recordButton" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <button id="recordButton" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-lg animate-pulse">
                             <span class="flex items-center">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
@@ -38,76 +40,96 @@
                                 Record
                             </span>
                         </button>
+                        <label class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-white shadow-lg animate-pulse">
+                            Upload Audio
+                            <input id="uploadAudioInput" type="file" accept="audio/*" class="hidden">
+                        </label>
                         <div id="recordingTimer" class="text-2xl font-mono hidden">00:00</div>
                     </div>
                     <div id="recordingStatus" class="text-gray-400"></div>
                     <audio id="audioPreview" controls class="w-full hidden"></audio>
                 </div>
             </div>
-
             <!-- Lyrics Section -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Your Lyrics</h2>
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
+                    Your Lyrics or Message
+                </h2>
                 <div class="space-y-4">
-                    <textarea id="lyricsInput" class="w-full h-32 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2" placeholder="Write your lyrics here..."></textarea>
-                    <button id="enhanceLyrics" class="px-6 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
-                        Enhance with AI
-                    </button>
+                    <textarea id="lyricsInput" class="w-full h-32 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Write your lyrics or message here..."></textarea>
+                    <button id="enhanceLyrics" class="px-6 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg">Enhance Lyrics</button>
                     <div id="enhancedLyrics" class="hidden mt-4 p-4 bg-gray-800 rounded-lg"></div>
                 </div>
             </div>
-
+            <!-- Genre Selection -->
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
+                    Select Music Genre
+                </h2>
+                <select id="musicGenre" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
+                    <option value="pop">Pop</option>
+                    <option value="kpop">K-pop</option>
+                    <option value="lofi">Lo-fi</option>
+                    <option value="edm">EDM</option>
+                    <option value="rock">Rock</option>
+                    <option value="hiphop">Hip Hop</option>
+                </select>
+            </div>
+            <!-- Voice-to-Singing Conversion -->
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
+                    Voice-to-Singing Conversion
+                </h2>
+                <button id="convertToSinging" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors shadow-lg animate-pulse">Convert Voice to Singing</button>
+                <div id="singingPreview" class="hidden mt-4">
+                    <audio id="singingAudio" controls class="w-full"></audio>
+                </div>
+            </div>
             <!-- Music Generation Section -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Generate Music</h2>
-                <div class="space-y-4">
-                    <select id="musicGenre" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
-                        <option value="pop">Pop</option>
-                        <option value="kpop">K-pop</option>
-                        <option value="lofi">Lo-fi</option>
-                        <option value="edm">EDM</option>
-                        <option value="rock">Rock</option>
-                        <option value="hiphop">Hip Hop</option>
-                    </select>
-                    <button id="generateMusic" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
-                        Generate Music
-                    </button>
-                    <div id="musicPreview" class="hidden mt-4">
-                        <audio id="generatedMusic" controls class="w-full"></audio>
-                    </div>
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
+                    Generate Music
+                </h2>
+                <button id="generateMusic" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-lg animate-pulse">Generate Music</button>
+                <div id="musicPreview" class="hidden mt-4">
+                    <audio id="generatedMusic" controls class="w-full"></audio>
                 </div>
             </div>
-
-            <!-- Voice Generation Section -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Generate AI Voice</h2>
-                <div class="space-y-4">
-                    <select id="voiceStyle" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
-                        <option value="21m00Tcm4TlvDq8ikWAM">Default Voice</option>
-                        <option value="AZnzlk1XvdvUeBnXmlld">Female Voice 1</option>
-                        <option value="EXAVITQu4vr4xnSDxMaL">Male Voice 1</option>
-                    </select>
-                    <button id="generateVoice" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
-                        Generate Voice
-                    </button>
-                    <div id="voicePreview" class="hidden mt-4">
-                        <audio id="generatedVoice" controls class="w-full"></audio>
-                    </div>
+            <!-- Album Art Creation -->
+            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
+                    Generate Album Art
+                </h2>
+                <button id="generateAlbumArt" class="px-6 py-3 bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-lg animate-pulse">Generate Album Art</button>
+                <div id="albumArtPreview" class="hidden mt-4">
+                    <img id="albumArtImage" class="w-64 h-64 object-cover rounded-lg mx-auto" src="" alt="Album Art Preview">
                 </div>
             </div>
-
             <!-- Navigation -->
             <div class="flex justify-between mt-8">
-                <a href="/profile" class="px-6 py-3 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">Previous</a>
-                <a href="/creation" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors text-white font-semibold">Next</a>
+                <a href="/profile" class="px-6 py-3 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors text-lg font-semibold">Previous</a>
+                <a href="/creation" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors text-white font-bold shadow-lg text-lg">Next: Finalize Memory</a>
             </div>
         </div>
     </div>
-
     <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
     <style>
     .fade-in { animation: fadeIn 0.7s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .animate-gradientBG {
+        background-size: 200% 200%;
+        animation: gradientBG 8s ease-in-out infinite;
+    }
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
     </style>
 </body>
 </html> 

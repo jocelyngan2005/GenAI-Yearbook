@@ -91,6 +91,7 @@ button:active {
     overflow: hidden;
     border-radius: 0.5rem;
     background-color: #1a1a1a;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
 .profile-card::before {
@@ -107,6 +108,12 @@ button:active {
 
 .profile-card:hover::before {
     opacity: 1;
+}
+
+.profile-card:hover {
+    box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.4), 0 1.5px 6px 0 rgba(0,0,0,0.15);
+    border-color: #a78bfa;
+    z-index: 20;
 }
 
 /* Upload area styles */
@@ -129,4 +136,102 @@ button:active {
 
 .loading {
     animation: pulse 1.5s infinite;
+}
+
+/* Add Profile Card Pulse */
+.animate-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+/* Fade-in/Scale-in Animation for Cards */
+.fade-in-card {
+    animation: fadeInCard 0.7s;
+}
+@keyframes fadeInCard {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Tooltip Styles */
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 1;
+    pointer-events: none;
+    z-index: 100;
+}
+[data-tooltip]::after {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+body {
+    background: linear-gradient(120deg, #232526 0%, #414345 100%);
+    background-size: 200% 200%;
+    animation: gradientBG 8s ease-in-out infinite;
+    transition: background 0.5s;
+    overflow-y: auto;
+    padding-top: 20px;
+}
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.fade-in { animation: fadeIn 0.7s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.fade-out { animation: fadeOut 0.5s forwards; }
+@keyframes fadeOut { to { opacity: 0; } }
+
+#confetti-canvas {
+    position: fixed;
+    pointer-events: none;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 9999;
+    display: none;
+}
+
+.profile-image {
+    position: relative;
+    top: 0;
+    left: 0;
+    z-index: 10;
+}
+
+/* Make modal scrollable and image fully visible */
+#profileModal .bg-gray-900 {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+#profileModal .border-dashed {
+    max-height: 350px;
+    min-height: 200px;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#profileModal .border-dashed img {
+    max-width: 100%;
+    max-height: 340px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 } 

@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     reader.onload = function(e) {
                         const preview = document.createElement('img');
                         preview.src = e.target.result;
-                        preview.className = 'w-full h-full object-cover rounded-lg';
+                        preview.className = 'w-full h-full object-contain rounded-lg';
                         const uploadArea = document.querySelector('.border-dashed');
                         uploadArea.innerHTML = '';
                         uploadArea.appendChild(preview);
@@ -95,10 +95,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const profileGrid = document.getElementById('profileGrid');
     profileGrid.addEventListener('click', async function(e) {
         // Edit button
-        if (e.target.closest('.edit-profile-btn')) {
+        const editBtn = e.target.closest('.edit-profile-btn');
+        if (editBtn) {
+            console.log('Edit button clicked');
             e.stopPropagation();
-            const btn = e.target.closest('.edit-profile-btn');
-            const card = btn.closest('.profile-card');
+            const card = editBtn.closest('.profile-card');
             const profile = JSON.parse(card.getAttribute('data-profile'));
             // Fill modal fields
             profileModal.classList.remove('hidden');
@@ -109,16 +110,20 @@ document.addEventListener('DOMContentLoaded', function() {
             profileForm.elements['style'].value = profile.style || '';
             profileForm.elements['quote'].value = profile.quote || '';
             profileForm.elements['funFact'].value = profile.funFact || '';
-            // Show preview image
+            document.getElementById('dreamInput').value = profile.dream || '';
+            // Show preview image with fallback
             const uploadArea = document.querySelector('.border-dashed');
-            uploadArea.innerHTML = `<img src='/static/uploads/${profile.photo}' class='w-full h-full object-cover rounded-lg'/>`;
+            const photoSrc = profile.photo ? `/static/uploads/${profile.photo}` : '/static/img/default.png';
+            uploadArea.innerHTML = `<img src='${photoSrc}' onerror="this.onerror=null;this.src='/static/img/default.png';" class='w-full h-full object-contain rounded-lg'/>`;
             setTimeout(attachPhotoUploadListener, 0);
+            return;
         }
         // Delete button
-        if (e.target.closest('.delete-profile-btn')) {
+        const deleteBtn = e.target.closest('.delete-profile-btn');
+        if (deleteBtn) {
+            console.log('Delete button clicked');
             e.stopPropagation();
-            const btn = e.target.closest('.delete-profile-btn');
-            const card = btn.closest('.profile-card');
+            const card = deleteBtn.closest('.profile-card');
             const profile = JSON.parse(card.getAttribute('data-profile'));
             const confirmed = await showConfirmDialog(`Are you sure you want to delete the profile for ${profile.firstName || 'this user'}?`, 'Delete', 'Cancel');
             if (!confirmed) return;
@@ -145,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } finally {
                 hideSpinner();
             }
+            return;
         }
     });
 
@@ -185,7 +191,8 @@ document.addEventListener('DOMContentLoaded', function() {
             lastName: formData.get('lastName'),
             style: formData.get('style'),
             quote: formData.get('quote'),
-            funFact: formData.get('funFact')
+            funFact: formData.get('funFact'),
+            dream: document.getElementById('dreamInput').value
         };
         const confirmed = await showConfirmDialog('Save changes to this profile?', 'Save', 'Discard');
         if (!confirmed) {
@@ -215,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 closeModal();
                 showToast(editingProfileId ? 'Profile updated!' : 'Profile created!');
+                if (!editingProfileId) confettiBurst();
                 setTimeout(() => location.reload(), 1200);
             } else {
                 alert('Error saving profile');
@@ -237,15 +245,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const detailsQuote = document.getElementById('detailsQuote');
     const detailsFunFact = document.getElementById('detailsFunFact');
     const detailsAvatar = document.getElementById('detailsAvatar');
+    const detailsDream = document.getElementById('detailsDream');
     // Toast
     const toast = document.getElementById('toast');
 
     // Show profile details modal
+    let selectedProfileId = null;
     document.querySelectorAll('.profile-card').forEach(card => {
         card.addEventListener('click', function(e) {
             // Prevent modal if edit/delete button was clicked
             if (e.target.closest('.edit-profile-btn') || e.target.closest('.delete-profile-btn')) return;
             const profile = JSON.parse(card.getAttribute('data-profile'));
+            selectedProfileId = profile.id;
             if (profile.photo) {
                 detailsPhoto.src = `/static/uploads/${profile.photo}`;
                 detailsPhoto.style.display = '';
@@ -258,6 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             detailsStyle.textContent = profile.style ? profile.style.charAt(0).toUpperCase() + profile.style.slice(1) : '';
             detailsQuote.textContent = profile.quote || '';
             detailsFunFact.textContent = profile.funFact || '';
+            detailsDream.textContent = profile.dream || '';
             profileDetailsModal.classList.remove('hidden');
         });
     });
@@ -364,4 +376,204 @@ document.addEventListener('DOMContentLoaded', function() {
             lastDeletedProfile = null;
         }
     };
+
+    // --- Quote Enhancement ---
+    const enhanceQuoteBtn = document.getElementById('enhanceQuoteBtn');
+    const quoteInput = document.getElementById('quoteInput');
+    if (enhanceQuoteBtn && quoteInput) {
+        enhanceQuoteBtn.onclick = async function() {
+            const quote = quoteInput.value.trim();
+            if (!quote) {
+                alert('Please enter a quote first.');
+                return;
+            }
+            showSpinner();
+            try {
+                const response = await fetch('/enhance_lyrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lyrics: quote, type: 'quote' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    quoteInput.value = data.enhanced_text;
+                } else {
+                    alert('Error enhancing quote: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error enhancing quote');
+            } finally {
+                hideSpinner();
+            }
+        };
+    }
+
+    // --- Dream Enhancement ---
+    const enhanceDreamBtn = document.getElementById('enhanceDreamBtn');
+    const dreamInput = document.getElementById('dreamInput');
+    if (enhanceDreamBtn && dreamInput) {
+        enhanceDreamBtn.onclick = async function() {
+            const dream = dreamInput.value.trim();
+            if (!dream) {
+                alert('Please enter your dream first.');
+                return;
+            }
+            showSpinner();
+            try {
+                const response = await fetch('/enhance_lyrics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lyrics: dream, type: 'dream' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    dreamInput.value = data.enhanced_text;
+                } else {
+                    alert('Error enhancing dream: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error enhancing dream');
+            } finally {
+                hideSpinner();
+            }
+        };
+    }
+
+    // --- Generate Audio for Fun Fact/Dream ---
+    const generateAudioBtn = document.getElementById('generateAudioBtn');
+    const funFactInput = document.getElementById('funFactInput');
+    const funFactAudioPreview = document.getElementById('funFactAudioPreview');
+    if (generateAudioBtn && funFactInput && funFactAudioPreview) {
+        generateAudioBtn.onclick = async function() {
+            const text = funFactInput.value.trim();
+            if (!text) {
+                alert('Please enter your fun fact or dream first.');
+                return;
+            }
+            showSpinner();
+            try {
+                const response = await fetch('/generate_voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    funFactAudioPreview.src = `/audio/${data.filename}`;
+                    funFactAudioPreview.classList.remove('hidden');
+                } else {
+                    alert('Error generating audio: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error generating audio');
+            } finally {
+                hideSpinner();
+            }
+        };
+    }
+
+    // --- Animated Page Transitions ---
+    function addFadeOutOnNav() {
+        document.querySelectorAll('a[href]').forEach(link => {
+            // Only fade out for internal navigation
+            link.addEventListener('click', function(e) {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('/') && !link.hasAttribute('download') && !link.target) {
+                    e.preventDefault();
+                    document.body.classList.add('fade-out');
+                    setTimeout(() => { window.location.href = href; }, 400);
+                }
+            });
+        });
+    }
+    addFadeOutOnNav();
+
+    // --- Confetti on Profile Creation ---
+    function confettiBurst() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        const confettiColors = ['#a78bfa', '#6366f1', '#f472b6', '#facc15', '#34d399'];
+        const confetti = Array.from({length: 120}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height,
+            r: 6 + Math.random() * 8,
+            d: 8 + Math.random() * 8,
+            color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltAngle: 0,
+            tiltAngleIncremental: (Math.random() * 0.07) + 0.05
+        }));
+        let angle = 0;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            angle += 0.01;
+            confetti.forEach(c => {
+                c.y += (Math.cos(angle + c.d) + 3 + c.r / 2) / 2;
+                c.x += Math.sin(angle);
+                c.tiltAngle += c.tiltAngleIncremental;
+                c.tilt = Math.sin(c.tiltAngle) * 15;
+                ctx.beginPath();
+                ctx.lineWidth = c.r;
+                ctx.strokeStyle = c.color;
+                ctx.moveTo(c.x + c.tilt + c.r, c.y);
+                ctx.lineTo(c.x + c.tilt, c.y + c.d);
+                ctx.stroke();
+            });
+        }
+        let frame = 0;
+        function animate() {
+            draw();
+            frame++;
+            if (frame < 80) {
+                requestAnimationFrame(animate);
+            } else {
+                canvas.style.display = 'none';
+            }
+        }
+        animate();
+    }
+
+    // Add Remove Photo button logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const removePhotoBtn = document.getElementById('removePhotoBtn');
+        if (removePhotoBtn) {
+            removePhotoBtn.onclick = function() {
+                const uploadArea = document.querySelector('.border-dashed');
+                uploadArea.innerHTML = `
+                    <div class="space-y-1 text-center w-full">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-400 justify-center">
+                            <label class="relative cursor-pointer rounded-md font-medium text-indigo-400 hover:text-indigo-300">
+                                <span>Upload a file</span>
+                                <input type="file" class="sr-only" accept="image/*" id="photoUpload">
+                            </label>
+                        </div>
+                        <button type="button" id="removePhotoBtn" class="mt-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm">Remove Photo</button>
+                    </div>
+                `;
+                uploadedPhotoFilename = null;
+                setTimeout(attachPhotoUploadListener, 0);
+                setTimeout(() => {
+                    const newRemoveBtn = document.getElementById('removePhotoBtn');
+                    if (newRemoveBtn) newRemoveBtn.onclick = removePhotoBtn.onclick;
+                }, 0);
+            };
+        }
+    });
+
+    // Next to Creation button logic
+    const nextToCreationBtn = document.getElementById('nextToCreationBtn');
+    if (nextToCreationBtn) {
+        nextToCreationBtn.onclick = function() {
+            if (selectedProfileId) {
+                window.location.href = `/voice?profile_id=${selectedProfileId}`;
+            }
+        };
+    }
 }); 

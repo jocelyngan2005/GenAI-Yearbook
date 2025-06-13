@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -10,6 +10,7 @@ import requests
 from dotenv import load_dotenv
 from PIL import Image
 import io
+import time
 
 # Load environment variables
 load_dotenv()
@@ -97,6 +98,7 @@ def save_profile():
             'style': data.get('style'),
             'quote': data.get('quote'),
             'funFact': data.get('funFact'),
+            'dream': data.get('dream'),
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
 
@@ -121,18 +123,15 @@ def get_profiles():
 def enhance_lyrics():
     data = request.json
     lyrics = data.get('lyrics', '')
-    
     try:
         # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-pro')
-        
-        # Generate enhanced lyrics
-        prompt = f"Enhance these lyrics to be more poetic and engaging while maintaining the original meaning: {lyrics}"
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Generate enhanced lyrics only, no description
+        prompt = f"Rewrite these song lyrics to be more poetic, catchy, or creative. Only return the improved lyrics, do not add any explanation or description.\n\nLyrics:\n{lyrics}"
         response = model.generate_content(prompt)
-        
         return jsonify({
             'success': True,
-            'enhanced_lyrics': response.text
+            'enhanced_text': response.text.strip()
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -368,6 +367,7 @@ def update_profile():
             profile['style'] = data.get('style', profile.get('style'))
             profile['quote'] = data.get('quote', profile.get('quote'))
             profile['funFact'] = data.get('funFact', profile.get('funFact'))
+            profile['dream'] = data.get('dream', profile.get('dream'))
             updated = True
             break
     if updated:
@@ -389,6 +389,40 @@ def delete_profile():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'error': 'Profile not found'}), 404
+
+@app.route('/voice')
+def voice():
+    return render_template('voice.html')
+
+@app.route('/voice_to_singing', methods=['POST'])
+def voice_to_singing():
+    lyrics = request.json.get('lyrics', '')
+    # TODO: Process audio file from request
+    # For now, use Gemini API to simulate voice-to-singing
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(f"Convert the following lyrics to singing: {lyrics}")
+        # Simulate saving the result
+        filename = f"singing_{int(time.time())}.mp3"
+        return jsonify({'success': True, 'filename': filename})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/generate_album_art', methods=['POST'])
+def generate_album_art():
+    lyrics = request.json.get('lyrics', '')
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(f"Generate album art for the following lyrics: {lyrics}")
+        # Simulate saving the result
+        filename = f"album_art_{int(time.time())}.png"
+        return jsonify({'success': True, 'filename': filename})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory('static/uploads', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
