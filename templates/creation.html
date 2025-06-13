@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Creation Pipeline - GenAI Memoryverse</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-black text-white min-h-screen">
+    <nav class="p-6 flex items-center">
+        <a href="/" class="flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full text-white font-semibold transition">
+            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            Back
+        </a>
+    </nav>
+    <div class="container mx-auto px-4 py-8 fade-in">
+        <!-- Progress Bar -->
+        <div class="flex items-center justify-center mb-8">
+            <div class="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
+                <div class="h-2 bg-purple-500" style="width: 100%"></div>
+            </div>
+            <span class="ml-4 text-sm text-purple-300">Step 3 of 3</span>
+        </div>
+        <h1 class="text-4xl font-bold text-center mb-8">AI Creation Pipeline</h1>
+        
+        <div class="max-w-4xl mx-auto bg-gray-900 rounded-lg p-6">
+            <!-- Progress Steps -->
+            <div class="flex justify-between mb-8">
+                <div class="flex-1 text-center">
+                    <div class="w-8 h-8 mx-auto bg-green-500 rounded-full flex items-center justify-center">✓</div>
+                    <p class="mt-2 text-sm">Profile</p>
+                </div>
+                <div class="flex-1 text-center">
+                    <div class="w-8 h-8 mx-auto bg-green-500 rounded-full flex items-center justify-center">✓</div>
+                    <p class="mt-2 text-sm">Voice & Sound</p>
+                </div>
+                <div class="flex-1 text-center">
+                    <div class="w-8 h-8 mx-auto bg-blue-500 rounded-full flex items-center justify-center">3</div>
+                    <p class="mt-2 text-sm">Creation</p>
+                </div>
+            </div>
+
+            <!-- Image Generation -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Generate Your Portrait</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Style</label>
+                            <select id="imageStyle" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+                                <option value="pixar">Pixar</option>
+                                <option value="anime">Anime</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="noir">Noir</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Additional Details</label>
+                            <input type="text" id="imagePrompt" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2" placeholder="Add details to your portrait...">
+                        </div>
+                    </div>
+                    <button id="generateImage" class="w-full px-6 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Generate Portrait
+                    </button>
+                    <div id="imagePreview" class="hidden mt-4">
+                        <img id="generatedImage" class="w-full rounded-lg" alt="Generated portrait">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Generation -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Create Your Music Video</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Select Portrait</label>
+                            <select id="selectedImage" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+                                <!-- Will be populated with generated images -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Select Audio</label>
+                            <select id="selectedAudio" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+                                <!-- Will be populated with generated audio -->
+                            </select>
+                        </div>
+                    </div>
+                    <button id="generateVideo" class="w-full px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
+                        Generate Music Video
+                    </button>
+                    <div id="videoPreview" class="hidden mt-4">
+                        <video id="generatedVideo" class="w-full rounded-lg" controls></video>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Formats -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Choose Your Output Format</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 transition-colors" data-format="yearbook">
+                        <h3 class="font-semibold mb-2">Yearbook Page</h3>
+                        <p class="text-sm text-gray-400">Portrait, quote, and fun fact in a classic yearbook style</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 transition-colors" data-format="music-video">
+                        <h3 class="font-semibold mb-2">Music Video</h3>
+                        <p class="text-sm text-gray-400">Album art, AI-enhanced voice, and animated video</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-700 transition-colors" data-format="time-capsule">
+                        <h3 class="font-semibold mb-2">Time Capsule</h3>
+                        <p class="text-sm text-gray-400">Future message with visuals, voiceover, and soundtrack</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finalize -->
+            <div class="flex justify-between mt-8">
+                <a href="/voice" class="px-6 py-3 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">Previous</a>
+                <a href="/" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors text-white font-semibold">Finish</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/creation.js') }}"></script>
+    <style>
+    .fade-in { animation: fadeIn 0.7s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</body>
+</html> 

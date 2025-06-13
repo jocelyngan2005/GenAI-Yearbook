@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory - GenAI Memoryverse</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-black text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <header class="text-center mb-12">
+                <h1 class="text-4xl font-bold mb-4">Memory Created</h1>
+                <p class="text-gray-400">Your unique memory has been generated and is ready to share!</p>
+            </header>
+
+            <!-- Content -->
+            <div class="bg-gray-900 rounded-lg p-6 mb-8">
+                {% if profile_data.format == 'yearbook' %}
+                    <!-- Yearbook Format -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <img src="{{ url_for('static', filename='uploads/' + profile_data.image) }}" 
+                                 alt="Portrait" 
+                                 class="w-full rounded-lg shadow-lg">
+                        </div>
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Quote</h3>
+                                <p class="text-gray-300 italic">{{ profile_data.quote }}</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Fun Fact</h3>
+                                <p class="text-gray-300">{{ profile_data.fun_fact }}</p>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Listen</h3>
+                                <audio controls class="w-full">
+                                    <source src="{{ url_for('static', filename='uploads/' + profile_data.audio) }}" type="audio/mpeg">
+                                </audio>
+                            </div>
+                        </div>
+                    </div>
+
+                {% elif profile_data.format == 'music-video' %}
+                    <!-- Music Video Format -->
+                    <div class="space-y-6">
+                        <div class="aspect-w-16 aspect-h-9">
+                            <video controls class="w-full rounded-lg">
+                                <source src="{{ url_for('static', filename='uploads/' + profile_data.video) }}" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Album Art</h3>
+                                <img src="{{ url_for('static', filename='uploads/' + profile_data.image) }}" 
+                                     alt="Album Art" 
+                                     class="w-full rounded-lg">
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Lyrics</h3>
+                                <p class="text-gray-300 whitespace-pre-line">{{ profile_data.lyrics }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                {% elif profile_data.format == 'time-capsule' %}
+                    <!-- Time Capsule Format -->
+                    <div class="space-y-8">
+                        <div class="text-center">
+                            <h2 class="text-2xl font-semibold mb-4">Message to Future Self</h2>
+                            <p class="text-gray-300">{{ profile_data.message }}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">Visual Memory</h3>
+                                <img src="{{ url_for('static', filename='uploads/' + profile_data.image) }}" 
+                                     alt="Memory" 
+                                     class="w-full rounded-lg">
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Voice Message</h3>
+                                    <audio controls class="w-full">
+                                        <source src="{{ url_for('static', filename='uploads/' + profile_data.audio) }}" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold mb-2">Soundtrack</h3>
+                                    <audio controls class="w-full">
+                                        <source src="{{ url_for('static', filename='uploads/' + profile_data.music) }}" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Share Section -->
+            <div class="text-center space-y-4">
+                <h2 class="text-2xl font-semibold">Share Your Memory</h2>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="shareOnTwitter()" class="px-6 py-3 bg-blue-400 rounded-lg hover:bg-blue-500 transition-colors">
+                        Share on Twitter
+                    </button>
+                    <button onclick="shareOnFacebook()" class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                        Share on Facebook
+                    </button>
+                    <button onclick="copyLink()" class="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function shareOnTwitter() {
+            const text = "Check out my AI-generated memory on GenAI Memoryverse!";
+            const url = window.location.href;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
+        }
+
+        function shareOnFacebook() {
+            const url = window.location.href;
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => alert('Link copied to clipboard!'))
+                .catch(err => console.error('Error copying link:', err));
+        }
+    </script>
+</body>
+</html> 
