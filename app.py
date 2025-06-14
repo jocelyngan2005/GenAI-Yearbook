@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
 import google.generativeai as genai
-from elevenlabs import generate, set_api_key
+import elevenlabs
 import json
 import tempfile
 import requests
@@ -26,6 +26,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'wav', 'mp3'}
 
 # Configure API keys
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
+print(f"ElevenLabs API Key: {'Set' if ELEVENLABS_API_KEY else 'Not set'}")
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 SUNO_API_KEY = os.getenv('SUNO_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')  # For DALL-E
@@ -34,7 +35,24 @@ os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_KEY
 
 # Configure Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
-set_api_key(ELEVENLABS_API_KEY)
+generation_config = {
+    "temperature": 0.9,
+    "top_p": 1,
+    "top_k": 40,
+    "max_output_tokens": 2048,
+}
+safety_settings = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+]
+model = genai.GenerativeModel(model_name="gemini-pro",
+                            generation_config=generation_config,
+                            safety_settings=safety_settings)
+
+# Configure ElevenLabs
+elevenlabs.set_api_key(ELEVENLABS_API_KEY)
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -74,7 +92,7 @@ LETTER_TEMPLATES = {
             'What advice would you give your younger self?'
         ]
     },
-    'dreams': {
+    'dream': {
         'title': 'Dreams & Aspirations',
         'prompts': [
             'What are your biggest dreams?',
@@ -180,29 +198,41 @@ def get_profiles():
 def enhance_lyrics():
     try:
         data = request.get_json()
-        text = data.get('lyrics', '')
         mood = data.get('genre', 'reflective')  # Now using mood instead of genre
         quote = data.get('quote', '')
         dream = data.get('dream', '')
         template = data.get('template', '')
-        if not text or not mood:
-            return jsonify({'success': False, 'error': 'Text and mood are required'})
+        if not mood:
+            return jsonify({'success': False, 'error': 'Mood is required'})
         template_prompts = []
         if template and template in LETTER_TEMPLATES:
             template_prompts = LETTER_TEMPLATES[template]['prompts']
-        prompt = f"""Create a heartfelt letter to my future self. The letter should have a {mood} tone.
+        prompt = f"""Create a deeply personal and meaningful letter to my future self. The letter should have a {mood} tone and incorporate the following elements:
 
 Context from my profile:
-- My favorite quote: \"{quote}\"
-- My dream: \"{dream}\"
+- My favorite quote: "{quote}"
+
+Please write a letter that:
+1. Opens with a warm and personal greeting
+2. Reflects on the significance of my favorite quote and how it might have influenced my journey
+3. Discusses my dreams and aspirations with hope and optimism
+4. Includes specific questions or thoughts for my future self to ponder
+5. Incorporates gentle reminders of my current values and priorities
+6. Expresses curiosity about how certain aspects of life might have changed
+7. Closes with words of encouragement and self-compassion
+
+The tone should be {mood}, but also maintain a balance of:
+- Authenticity and sincerity
+- Wisdom and introspection
+- Hope and encouragement
+- Personal connection and emotional depth
+
+Format the letter with proper paragraphs, and make it feel like a genuine conversation with my future self.
 
 If template prompts are provided, incorporate them naturally into the letter:
 {chr(10).join(f'- {prompt}' for prompt in template_prompts)}
 
-Original text to enhance:
-{text}
-
-The enhanced letter should:
+The letter should:
 1. Be personal and emotional
 2. Include specific details and memories
 3. Express hopes and dreams for the future
@@ -213,14 +243,18 @@ The enhanced letter should:
 8. Incorporate the quote and dream naturally
 9. Address the template prompts if provided
 
-Please enhance this into a beautiful letter that I'll be excited to read in the future."""
+Please create a beautiful letter that I'll be excited to read in the future."""
         try:
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content(prompt)
-            enhanced_text = response.text
+            # Create the prompt for letter generation
+            full_prompt = prompt
+            if template_prompts:
+                full_prompt += "\n\nConsider addressing these aspects:\n" + "\n".join(f"- {p}" for p in template_prompts)
+            
+            response = model.generate_content(full_prompt)
+            enhanced_text = response.text.strip()
         except Exception as e:
             print(f"Error using Gemini API: {str(e)}")
-            enhanced_text = f"""Dear Future Me,\n\n{text}\n\nI hope this letter finds you well. As I write this, I'm thinking about my favorite quote: \"{quote}\" and my dream to {dream}. I wonder how these have shaped your journey.\n\nLooking forward to reading this in the future,\nPresent Me"""
+            enhanced_text = f"""Dear Future Me,\nI hope this letter finds you well. As I write this, I'm thinking about my favorite quote: \"{quote}\". I wonder how these have shaped your journey.\n\nLooking forward to reading this in the future,\nPresent Me"""
         return jsonify({'success': True, 'enhanced_text': enhanced_text})
     except Exception as e:
         print(f"Error in enhance_lyrics: {str(e)}")
@@ -228,44 +262,82 @@ Please enhance this into a beautiful letter that I'll be excited to read in the 
 
 @app.route('/generate_voice', methods=['POST'])
 def generate_voice():
-    data = request.json
-    text = data.get('text', '')
-    voice_id = data.get('voice_id', '21m00Tcm4TlvDq8ikWAM')  # Default voice ID
     try:
-        # Generate voice using ElevenLabs
-        audio = generate(
-            text=text,
-            voice=voice_id,
-            model="eleven_monolingual_v1"
-        )
-        # Save the audio file
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"voice_{timestamp}.mp3"
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        with open(filepath, 'wb') as f:
-            f.write(audio)
-        return jsonify({
-            'success': True,
-            'filename': filename
-        })
-    except Exception as e:
-        print(f"Error in generate_voice (ElevenLabs): {str(e)}")
-        # Fallback: gTTS (Google Text-to-Speech, direct MP3)
+        data = request.get_json()
+        text = data.get('text', '')
+        voice_id = data.get('voice_id', 'EXAVITQu4vr4xnSDxMaL')  # Default voice
+        
+        print("1. Received request to generate voice")
+        print(f"   - Text: {text}")
+        print(f"   - Voice ID: {voice_id}")
+        print(f"   - ElevenLabs API Key: {ELEVENLABS_API_KEY[:5]}... (length: {len(ELEVENLABS_API_KEY)})")
+        
+        if not text:
+            print("Error: No text provided")
+            return jsonify({'success': False, 'error': 'No text provided'}), 400
+        
+        if not ELEVENLABS_API_KEY:
+            print("Error: No ElevenLabs API key set")
+            return jsonify({'success': False, 'error': 'ElevenLabs API key not configured'}), 500
+        
         try:
+            # Generate voice using ElevenLabs client
+            print("3. Attempting to generate voice with ElevenLabs")
+            
+            # Save to a temporary file first
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            mp3_path = os.path.join(app.config['UPLOAD_FOLDER'], f"voice_{timestamp}_gtts.mp3")
-            tts = gTTS(text)
-            tts.save(mp3_path)
-            filename = os.path.basename(mp3_path)
+            filename = f"voice_{timestamp}.mp3"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Create uploads directory if it doesn't exist
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            
+            # Generate and save the audio
+            audio = client.text_to_speech.convert(
+                text=text,
+                voice_id=voice_id,
+                model_id="eleven_multilingual_v2",
+                output_format="mp3_44100_128"
+            )
+            
+            with open(filepath, 'wb') as f:
+                f.write(audio)
+            
+            print("4. Voice generation successful")
             return jsonify({
                 'success': True,
-                'filename': filename,
-                'fallback': True,
-                'error': 'AI voiceover fallback using gTTS.'
+                'filename': filename
             })
-        except Exception as gtts_e:
-            print(f"Error in fallback gTTS: {str(gtts_e)}")
-            return jsonify({'success': False, 'error': 'Voiceover unavailable and fallback failed.'}), 500
+            
+        except Exception as e:
+            print(f"Error in ElevenLabs generation: {str(e)}")
+            try:
+                # Fallback to gTTS if ElevenLabs fails
+                print("5. Falling back to gTTS")
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"voice_{timestamp}_gtts.mp3"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                tts = gTTS(text=text, lang='en')
+                tts.save(filepath)
+                
+                print("6. gTTS generation successful")
+                return jsonify({
+                    'success': True,
+                    'filename': filename,
+                    'fallback': True
+                })
+                
+            except Exception as gtts_e:
+                print(f"7. gTTS also failed: {str(gtts_e)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Both ElevenLabs and gTTS failed. ElevenLabs error: {str(e)}, gTTS error: {str(gtts_e)}'
+                }), 500
+                
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/generate_music', methods=['POST'])
 def generate_music():
@@ -346,53 +418,49 @@ def creation():
 
 @app.route('/generate_image', methods=['POST'])
 def generate_image():
-    data = request.json
-    prompt = data.get('prompt', '')
-    style = data.get('style', 'pixar')
-    
     try:
-        # Call DALL-E API to generate image
-        headers = {
-            'Authorization': f'Bearer {OPENAI_API_KEY}',
-            'Content-Type': 'application/json'
-        }
+        data = request.get_json()
+        prompt = data.get('prompt')
         
-        payload = {
-            'prompt': f"Create a {style} style portrait: {prompt}",
-            'n': 1,
-            'size': '1024x1024'
-        }
-        
-        response = requests.post(
-            'https://api.openai.com/v1/images/generations',
-            headers=headers,
-            json=payload
+        if not prompt:
+            return jsonify({'success': False, 'error': 'Prompt is required'})
+
+        # Generate image using Replicate
+        output = replicate.run(
+            "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+            input={
+                'prompt': prompt,
+                'negative_prompt': 'blurry, low quality, distorted, disfigured',
+                'width': 768,
+                'height': 768,
+                'num_outputs': 1,
+                'scheduler': 'K_EULER',
+                'num_inference_steps': 50,
+                'guidance_scale': 7.5,
+                'apply_watermark': False
+            }
         )
-        
-        if response.status_code == 200:
-            image_url = response.json()['data'][0]['url']
-            
-            # Download the image
-            image_response = requests.get(image_url)
-            image_data = image_response.content
-            
-            # Save the image
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"image_{timestamp}.png"
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            with open(filepath, 'wb') as f:
-                f.write(image_data)
-            
-            return jsonify({
-                'success': True,
-                'filename': filename
-            })
-        else:
-            return jsonify({'error': 'Failed to generate image'}), 500
-            
+
+        if not output:
+            return jsonify({'success': False, 'error': 'Failed to generate image'})
+
+        # Download and save the image
+        image_url = output[0]
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': 'Failed to download image'})
+
+        # Save the image
+        filename = f'image_{int(time.time())}.png'
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        with open(filepath, 'wb') as f:
+            f.write(response.content)
+
+        return jsonify({'success': True, 'filename': filename})
+
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error generating image: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/generate_video', methods=['POST'])
 def generate_video():
@@ -876,4 +944,4 @@ def create_simple_letter_art(image_path, letter, style, border):
         return None
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=3001)

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addProfileCard = document.getElementById('addProfileCard');
     const profileModal = document.getElementById('profileModal');
     const profileForm = document.getElementById('profileForm');
-    const photoUpload = document.getElementById('photoUpload');
+    let photoUpload = document.querySelector('#uploadArea input[type="file"]');
     let uploadedPhotoFilename = null;
     let editingProfileId = null;
 
@@ -13,13 +13,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Photo Upload Event Listener (robust) ---
     function attachPhotoUploadListener() {
-        const photoUpload = document.getElementById('photoUpload');
-        if (!photoUpload) return;
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadError = document.getElementById('uploadError');
+
+        if (!photoUpload || !uploadArea) return;
+
+        // Make the entire upload area clickable
+        uploadArea.addEventListener('click', () => {
+            photoUpload.click();
+        });
+
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-indigo-500');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('border-indigo-500');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-indigo-500');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        // Handle file selection
         photoUpload.onchange = async function(e) {
             const file = e.target.files[0];
-            if (!file) return;
+            if (file) handleFile(file);
+        };
+
+        async function handleFile(file) {
+            // Clear previous error
+            uploadError.textContent = '';
+            uploadError.classList.add('hidden');
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                uploadError.textContent = 'Please upload a PNG, JPG, or JPEG file.';
+                uploadError.classList.remove('hidden');
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                uploadError.textContent = 'File size must be less than 10MB.';
+                uploadError.classList.remove('hidden');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('photo', file);
+
             try {
                 showSpinner();
                 const response = await fetch('/upload', {
@@ -27,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 });
                 const data = await response.json();
+                
                 if (data.success) {
                     uploadedPhotoFilename = data.filename;
                     // Show preview of uploaded image
@@ -35,21 +85,61 @@ document.addEventListener('DOMContentLoaded', function() {
                         const preview = document.createElement('img');
                         preview.src = e.target.result;
                         preview.className = 'w-full h-full object-contain rounded-lg';
-                        const uploadArea = document.querySelector('.border-dashed');
                         uploadArea.innerHTML = '';
                         uploadArea.appendChild(preview);
+                        
+                        // Add remove button
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow-lg transition-colors';
+                        removeBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                        removeBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            resetUploadArea();
+                        };
+                        uploadArea.appendChild(removeBtn);
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    alert('Error uploading photo: ' + data.error);
+                    uploadError.textContent = data.error || 'Error uploading photo. Please try again.';
+                    uploadError.classList.remove('hidden');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error uploading photo');
+                uploadError.textContent = 'Error uploading photo. Please try again.';
+                uploadError.classList.remove('hidden');
             } finally {
                 hideSpinner();
             }
-        };
+        }
+
+        function resetUploadArea() {
+            uploadedPhotoFilename = null;
+            photoUpload.value = '';
+            uploadArea.innerHTML = `
+                <div class="space-y-1 text-center w-full">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="flex flex-col items-center text-sm text-gray-400">
+                        <label class="relative cursor-pointer bg-indigo-600 px-4 py-2 rounded-lg text-white hover:bg-indigo-700 transition-colors mb-2">
+                            <span>Choose a file</span>
+                            <input type="file" class="sr-only" accept="image/*">
+                        </label>
+                        <p class="text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</p>
+                    </div>
+                    <div id="uploadError" class="mt-2 text-red-500 text-sm hidden"></div>
+                </div>
+            `;
+            
+            // Update the photoUpload reference to the new input element
+            photoUpload = uploadArea.querySelector('input[type="file"]');
+            
+            // Reattach event listeners
+            photoUpload.onchange = async function(e) {
+                const file = e.target.files[0];
+                if (file) handleFile(file);
+            };
+        }
     }
     // Attach on page load
     attachPhotoUploadListener();
@@ -582,34 +672,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Voice Upload/Record & Playback ---
-    let voiceFileInput = null;
     let voicePlayer = null;
-    let recordBtn = null;
-    let stopBtn = null;
-    let mediaRecorder = null;
-    let audioChunks = [];
 
     function createVoiceSection(profileId) {
         const container = document.createElement('div');
         container.className = 'mt-4 flex flex-col items-center';
-        // Upload
-        voiceFileInput = document.createElement('input');
-        voiceFileInput.type = 'file';
-        voiceFileInput.accept = 'audio/*';
-        voiceFileInput.className = 'mb-2';
-        voiceFileInput.onchange = () => handleVoiceUpload(profileId);
-        container.appendChild(voiceFileInput);
-        // Record
-        recordBtn = document.createElement('button');
-        recordBtn.textContent = 'Record Voice';
-        recordBtn.className = 'px-4 py-2 bg-indigo-600 text-white rounded mb-2';
-        recordBtn.onclick = () => startRecording(profileId);
-        container.appendChild(recordBtn);
-        stopBtn = document.createElement('button');
-        stopBtn.textContent = 'Stop Recording';
-        stopBtn.className = 'px-4 py-2 bg-red-600 text-white rounded mb-2 hidden';
-        stopBtn.onclick = stopRecording;
-        container.appendChild(stopBtn);
         // Player
         voicePlayer = document.createElement('audio');
         voicePlayer.controls = true;
@@ -625,64 +692,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         return container;
-    }
-
-    async function handleVoiceUpload(profileId) {
-        const file = voiceFileInput.files[0];
-        if (!file) return;
-        const formData = new FormData();
-        formData.append('profile_id', profileId);
-        formData.append('audio', file);
-        const res = await fetch('/save_voice', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.success) {
-            voicePlayer.src = `/static/uploads/${data.filename}`;
-            voicePlayer.classList.remove('hidden');
-            alert('Voice uploaded!');
-        } else {
-            alert('Error uploading voice: ' + data.error);
-        }
-    }
-
-    function startRecording(profileId) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert('Recording not supported in this browser.');
-            return;
-        }
-        recordBtn.disabled = true;
-        stopBtn.classList.remove('hidden');
-        audioChunks = [];
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const formData = new FormData();
-                    formData.append('profile_id', profileId);
-                    formData.append('audio', audioBlob, 'recorded.wav');
-                    fetch('/save_voice', { method: 'POST', body: formData })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                voicePlayer.src = `/static/uploads/${data.filename}`;
-                                voicePlayer.classList.remove('hidden');
-                                alert('Voice recorded and saved!');
-                            } else {
-                                alert('Error saving voice: ' + data.error);
-                            }
-                        });
-                };
-                mediaRecorder.start();
-            });
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-            recordBtn.disabled = false;
-            stopBtn.classList.add('hidden');
-        }
     }
 
     // Insert voice section in profile details modal
