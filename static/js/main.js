@@ -361,10 +361,14 @@ document.addEventListener('DOMContentLoaded', function() {
         showSpinner();
         // Re-create profile
         try {
+            const payload = { ...lastDeletedProfile };
+            if (lastDeletedProfile.voice_filename) {
+                payload.voice_filename = lastDeletedProfile.voice_filename;
+            }
             const response = await fetch('/save_profile', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(lastDeletedProfile)
+                body: JSON.stringify(payload)
             });
             const result = await response.json();
             if (result.success) {
@@ -576,4 +580,124 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
+
+    // --- Voice Upload/Record & Playback ---
+    let voiceFileInput = null;
+    let voicePlayer = null;
+    let recordBtn = null;
+    let stopBtn = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+
+    function createVoiceSection(profileId) {
+        const container = document.createElement('div');
+        container.className = 'mt-4 flex flex-col items-center';
+        // Upload
+        voiceFileInput = document.createElement('input');
+        voiceFileInput.type = 'file';
+        voiceFileInput.accept = 'audio/*';
+        voiceFileInput.className = 'mb-2';
+        voiceFileInput.onchange = () => handleVoiceUpload(profileId);
+        container.appendChild(voiceFileInput);
+        // Record
+        recordBtn = document.createElement('button');
+        recordBtn.textContent = 'Record Voice';
+        recordBtn.className = 'px-4 py-2 bg-indigo-600 text-white rounded mb-2';
+        recordBtn.onclick = () => startRecording(profileId);
+        container.appendChild(recordBtn);
+        stopBtn = document.createElement('button');
+        stopBtn.textContent = 'Stop Recording';
+        stopBtn.className = 'px-4 py-2 bg-red-600 text-white rounded mb-2 hidden';
+        stopBtn.onclick = stopRecording;
+        container.appendChild(stopBtn);
+        // Player
+        voicePlayer = document.createElement('audio');
+        voicePlayer.controls = true;
+        voicePlayer.className = 'mt-2 hidden';
+        container.appendChild(voicePlayer);
+        // Load existing voice
+        fetch(`/get_profile_voice/${profileId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.filename) {
+                    voicePlayer.src = `/static/uploads/${data.filename}`;
+                    voicePlayer.classList.remove('hidden');
+                }
+            });
+        return container;
+    }
+
+    async function handleVoiceUpload(profileId) {
+        const file = voiceFileInput.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('profile_id', profileId);
+        formData.append('audio', file);
+        const res = await fetch('/save_voice', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) {
+            voicePlayer.src = `/static/uploads/${data.filename}`;
+            voicePlayer.classList.remove('hidden');
+            alert('Voice uploaded!');
+        } else {
+            alert('Error uploading voice: ' + data.error);
+        }
+    }
+
+    function startRecording(profileId) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Recording not supported in this browser.');
+            return;
+        }
+        recordBtn.disabled = true;
+        stopBtn.classList.remove('hidden');
+        audioChunks = [];
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const formData = new FormData();
+                    formData.append('profile_id', profileId);
+                    formData.append('audio', audioBlob, 'recorded.wav');
+                    fetch('/save_voice', { method: 'POST', body: formData })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                voicePlayer.src = `/static/uploads/${data.filename}`;
+                                voicePlayer.classList.remove('hidden');
+                                alert('Voice recorded and saved!');
+                            } else {
+                                alert('Error saving voice: ' + data.error);
+                            }
+                        });
+                };
+                mediaRecorder.start();
+            });
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            recordBtn.disabled = false;
+            stopBtn.classList.add('hidden');
+        }
+    }
+
+    // Insert voice section in profile details modal
+    const detailsVoiceSection = document.createElement('div');
+    detailsVoiceSection.id = 'detailsVoiceSection';
+    document.getElementById('profileDetailsModal').querySelector('.flex.flex-col.items-center').appendChild(detailsVoiceSection);
+
+    // Show voice section when opening details modal
+    const oldProfileDetailsModalHandler = document.querySelectorAll('.profile-card');
+    document.querySelectorAll('.profile-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.edit-profile-btn') || e.target.closest('.delete-profile-btn')) return;
+            const profile = JSON.parse(card.getAttribute('data-profile'));
+            detailsVoiceSection.innerHTML = '';
+            detailsVoiceSection.appendChild(createVoiceSection(profile.id));
+        });
+    });
 }); 

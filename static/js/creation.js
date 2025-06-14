@@ -17,6 +17,141 @@ document.addEventListener('DOMContentLoaded', function() {
     const outputFormats = document.querySelectorAll('[data-format]');
     let selectedFormat = null;
 
+    let selectedTheme = null;
+    let capsuleVisualFilename = null;
+    let capsuleMusicFilename = null;
+    let capsuleVideoFilename = null;
+    let enhancedCapsuleMessage = '';
+
+    // Theme Selection
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('bg-indigo-600', 'bg-pink-600', 'bg-green-600', 'bg-yellow-600'));
+            this.classList.add('bg-indigo-600');
+            selectedTheme = this.dataset.theme;
+        });
+    });
+
+    // Enhance Capsule Message
+    document.getElementById('enhanceCapsuleMessageBtn').addEventListener('click', async function() {
+        const msg = document.getElementById('capsuleMessageInput').value;
+        if (!msg) {
+            showError('capsuleMessageError', 'Please write a message first!');
+            return;
+        }
+        try {
+            const response = await fetch('/enhance_lyrics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lyrics: msg, genre: selectedTheme || 'future', type: 'capsule' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                enhancedCapsuleMessage = data.enhanced_lyrics || data.enhanced_text;
+                document.getElementById('capsuleMessageInput').value = enhancedCapsuleMessage;
+                showToast('Message enhanced!');
+            } else {
+                showError('capsuleMessageError', data.error || 'Error enhancing message');
+            }
+        } catch (error) {
+            showError('capsuleMessageError', 'Error enhancing message');
+        }
+    });
+
+    // Generate Capsule Visuals
+    document.getElementById('generateCapsuleVisualBtn').addEventListener('click', async function() {
+        try {
+            const response = await fetch('/generate_image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: enhancedCapsuleMessage || document.getElementById('capsuleMessageInput').value, style: selectedTheme || 'future' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                capsuleVisualFilename = data.filename;
+                const img = document.getElementById('capsuleVisualImage');
+                img.src = `/static/uploads/${data.filename}?t=${Date.now()}`;
+                document.getElementById('capsuleVisualPreview').classList.remove('hidden');
+                document.getElementById('downloadCapsuleVisual').href = `/static/uploads/${data.filename}`;
+                showToast('Visual generated!');
+            } else {
+                showError('capsuleVisualError', data.error || 'Error generating visual');
+            }
+        } catch (error) {
+            showError('capsuleVisualError', 'Error generating visual');
+        }
+    });
+
+    // Generate Capsule Music
+    document.getElementById('generateCapsuleMusicBtn').addEventListener('click', async function() {
+        try {
+            const response = await fetch('/generate_music', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lyrics: '', genre: 'ambient' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                capsuleMusicFilename = data.filename;
+                const audio = document.getElementById('capsuleMusicAudio');
+                audio.src = `/static/uploads/${data.filename}?t=${Date.now()}`;
+                document.getElementById('capsuleMusicPreview').classList.remove('hidden');
+                document.getElementById('downloadCapsuleMusic').href = `/static/uploads/${data.filename}`;
+                showToast('Soundtrack generated!');
+            } else {
+                showError('capsuleMusicError', data.error || 'Error generating soundtrack');
+            }
+        } catch (error) {
+            showError('capsuleMusicError', 'Error generating soundtrack');
+        }
+    });
+
+    // Generate Capsule Video (Simulated)
+    document.getElementById('generateCapsuleVideoBtn').addEventListener('click', function() {
+        // Simulate video generation with a placeholder
+        capsuleVideoFilename = 'demo_capsule_video.mp4';
+        const video = document.getElementById('capsuleVideo');
+        video.src = '/static/demo/demo_capsule_video.mp4';
+        document.getElementById('capsuleVideoPreview').classList.remove('hidden');
+        document.getElementById('downloadCapsuleVideo').href = '/static/demo/demo_capsule_video.mp4';
+        showToast('Demo video ready!');
+    });
+
+    // Send to Future Me (Demo)
+    document.getElementById('sendToFutureMeBtn').addEventListener('click', function() {
+        document.getElementById('futureMeConfirmation').classList.remove('hidden');
+        showToast('Scheduled for the future! (Demo)');
+    });
+
+    // Populate Summary
+    function updateSummary() {
+        const summary = document.getElementById('capsuleSummary');
+        summary.innerHTML = '';
+        if (selectedTheme) summary.innerHTML += `<div><b>Theme:</b> ${selectedTheme}</div>`;
+        if (enhancedCapsuleMessage) summary.innerHTML += `<div><b>Message:</b> ${enhancedCapsuleMessage}</div>`;
+        if (capsuleVisualFilename) summary.innerHTML += `<div><b>Visual:</b> <img src="/static/uploads/${capsuleVisualFilename}" class="w-32 inline-block align-middle"/></div>`;
+        if (capsuleMusicFilename) summary.innerHTML += `<div><b>Soundtrack:</b> <audio src="/static/uploads/${capsuleMusicFilename}" controls class="inline-block align-middle"></audio></div>`;
+        if (capsuleVideoFilename) summary.innerHTML += `<div><b>Video:</b> <video src="/static/demo/demo_capsule_video.mp4" controls class="w-32 inline-block align-middle"></video></div>`;
+    }
+
+    // Show toast
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+        updateSummary();
+    }
+
+    // Show error
+    function showError(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
     // Generate Image
     generateImageButton.addEventListener('click', async () => {
         const style = imageStyle.value;

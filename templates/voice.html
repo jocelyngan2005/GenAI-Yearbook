@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Voice, Your Sound - GenAI Memoryverse</title>
+    <title>Your Voice, Your Poem - GenAI Memoryverse</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -22,98 +22,126 @@
             </div>
             <span class="ml-4 text-lg text-purple-300 font-bold tracking-wide">Step 2 of 3</span>
         </div>
-        <h1 class="text-5xl font-extrabold text-center mb-10 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">Your Voice, Your Sound</h1>
+        <h1 class="text-5xl font-extrabold text-center mb-10 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">Your Voice, Your Letter</h1>
         <div class="max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-3xl shadow-2xl p-10">
-            <!-- Voice Recording/Upload Section -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-                    Record or Upload Your Voice
-                </h2>
-                <div class="space-y-4">
-                    <div class="flex flex-wrap items-center gap-4">
-                        <button id="recordButton" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-lg animate-pulse">
-                            <span class="flex items-center">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-                                </svg>
-                                Record
-                            </span>
-                        </button>
-                        <label class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-white shadow-lg animate-pulse">
-                            Upload Audio
-                            <input id="uploadAudioInput" type="file" accept="audio/*" class="hidden">
-                        </label>
-                        <div id="recordingTimer" class="text-2xl font-mono hidden">00:00</div>
-                    </div>
-                    <div id="recordingStatus" class="text-gray-400"></div>
-                    <audio id="audioPreview" controls class="w-full hidden"></audio>
-                </div>
-            </div>
-            <!-- Lyrics Section -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
-                    Your Lyrics or Message
-                </h2>
-                <div class="space-y-4">
-                    <textarea id="lyricsInput" class="w-full h-32 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Write your lyrics or message here..."></textarea>
-                    <button id="enhanceLyrics" class="px-6 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg">Enhance Lyrics</button>
-                    <div id="enhancedLyrics" class="hidden mt-4 p-4 bg-gray-800 rounded-lg"></div>
-                </div>
-            </div>
-            <!-- Genre Selection -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
-                    Select Music Genre
-                </h2>
-                <select id="musicGenre" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all">
-                    <option value="pop">Pop</option>
-                    <option value="kpop">K-pop</option>
-                    <option value="lofi">Lo-fi</option>
-                    <option value="edm">EDM</option>
-                    <option value="rock">Rock</option>
-                    <option value="hiphop">Hip Hop</option>
+            <!-- Add new mood/tone selection for letter -->
+            <div class="mb-4">
+                <label for="moodSelector" class="block text-lg font-semibold mb-2">Select Letter Mood/Tone</label>
+                <select id="moodSelector" class="w-full bg-gray-700 text-white rounded-lg p-2">
+                    <option value="reflective">Reflective</option>
+                    <option value="encouraging">Encouraging</option>
+                    <option value="grateful">Grateful</option>
+                    <option value="hopeful">Hopeful</option>
+                    <option value="nostalgic">Nostalgic</option>
+                    <option value="inspirational">Inspirational</option>
+                    <option value="funny">Funny</option>
+                    <option value="serious">Serious</option>
                 </select>
             </div>
-            <!-- Voice-to-Singing Conversion -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
-                    Voice-to-Singing Conversion
-                </h2>
-                <button id="convertToSinging" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors shadow-lg animate-pulse">Convert Voice to Singing</button>
-                <div id="singingPreview" class="hidden mt-4">
-                    <audio id="singingAudio" controls class="w-full"></audio>
+            <!-- Lyrics Section -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">2. Write a Letter to Your Future Self</h3>
+                <div class="space-y-4">
+                    <textarea id="lyricsInput" rows="6" class="w-full bg-gray-700 text-white rounded-lg p-4" placeholder="Write a heartfelt letter to your future self... Share your dreams, hopes, and current thoughts. What would you like to remember or tell yourself in the future?"></textarea>
+                    <button id="enhanceLyricsBtn" class="px-6 py-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors text-white font-semibold">
+                        <i class="fas fa-magic mr-2"></i>Enhance Letter
+                    </button>
+                    <div id="lyricsError" class="text-red-400 text-sm hidden"></div>
                 </div>
+            </div>
+            <!-- Poem Narration -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">3. Letter Narration (AI Voiceover)</h3>
+                <button id="narratePoemBtn" class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors text-white font-semibold mb-2">
+                    <i class="fas fa-volume-up mr-2"></i>Generate Voiceover
+                </button>
+                <div id="poemVoicePreview" class="hidden mt-4">
+                    <audio id="poemVoiceAudio" controls class="w-full"></audio>
+                    <a id="downloadPoemVoice" href="#" download class="mt-2 inline-block text-indigo-400 hover:underline">Download Voiceover</a>
+                </div>
+                <div id="poemVoiceError" class="text-red-400 text-sm hidden"></div>
+            </div>
+            <!-- Voice Recording/Upload Section -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">4. Record or Upload Your Voice</h3>
+                <div class="flex flex-wrap items-center gap-4 mb-4">
+                    <button id="recordBtn" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-lg">
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                            </svg>
+                            Record
+                        </span>
+                    </button>
+                    <button id="stopBtn" class="px-6 py-3 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors shadow-lg hidden">
+                        <span class="flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+                            </svg>
+                            Stop
+                        </span>
+                    </button>
+                    <label class="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-white shadow-lg">
+                        Upload Audio
+                        <input id="uploadBtn" type="file" accept="audio/*" class="hidden">
+                    </label>
+                </div>
+                <audio id="audioPlayer" controls class="w-full hidden"></audio>
+                <div id="voiceError" class="text-red-400 text-sm hidden"></div>
             </div>
             <!-- Music Generation Section -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
-                    Generate Music
-                </h2>
-                <button id="generateMusic" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-lg animate-pulse">Generate Music</button>
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">5. Generate Music (Background Only or With Lyrics)</h3>
+                <button id="generateMusic" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-lg">Generate Music</button>
                 <div id="musicPreview" class="hidden mt-4">
                     <audio id="generatedMusic" controls class="w-full"></audio>
+                    <a id="downloadMusic" href="#" download class="mt-2 inline-block text-indigo-400 hover:underline">Download Music</a>
                 </div>
+                <div id="musicError" class="text-red-400 text-sm hidden"></div>
             </div>
-            <!-- Album Art Creation -->
-            <div class="mb-10 p-6 rounded-2xl bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-                    <svg class="w-7 h-7 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6h13M5 6h.01"/></svg>
-                    Generate Album Art
-                </h2>
-                <button id="generateAlbumArt" class="px-6 py-3 bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-lg animate-pulse">Generate Album Art</button>
-                <div id="albumArtPreview" class="hidden mt-4">
-                    <img id="albumArtImage" class="w-64 h-64 object-cover rounded-lg mx-auto" src="" alt="Album Art Preview">
+            <!-- Voice-to-Singing Conversion -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">6. Convert Your Voice to Singing</h3>
+                <button id="convertBtn" class="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors shadow-lg" disabled>Convert Voice to Singing</button>
+                <div id="singingPreview" class="hidden mt-4">
+                    <audio id="singingAudio" controls class="w-full"></audio>
+                    <a id="downloadSinging" href="#" download class="mt-2 inline-block text-indigo-400 hover:underline">Download Singing</a>
                 </div>
+                <div id="singingError" class="text-red-400 text-sm hidden"></div>
             </div>
-            <!-- Navigation -->
-            <div class="flex justify-between mt-8">
-                <a href="/profile" class="px-6 py-3 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors text-lg font-semibold">Previous</a>
-                <a href="/creation" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors text-white font-bold shadow-lg text-lg">Next: Finalize Memory</a>
+            <!-- Update Album Art section to Letter Art, add file input for user picture -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">7. Generate Letter Art (Cover Page)</h3>
+                <input id="letterArtPicture" type="file" accept="image/*" class="mb-4 block text-white" />
+                <button id="generateLetterArt" class="px-6 py-3 bg-pink-600 rounded-lg hover:bg-pink-700 transition-colors shadow-lg">Generate Letter Art</button>
+                <div id="letterArtPreview" class="hidden mt-4">
+                    <img id="letterArtImage" class="w-64 h-64 object-cover rounded-lg mx-auto" src="" alt="Letter Art Preview">
+                    <a id="downloadLetterArt" href="#" download class="mt-2 inline-block text-indigo-400 hover:underline">Download Letter Art</a>
+                </div>
+                <div id="letterArtError" class="text-red-400 text-sm hidden"></div>
+            </div>
+            <!-- Music Video Generation (Placeholder) -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">8. Generate Music Video (Coming Soon)</h3>
+                <button id="generateVideo" class="px-6 py-3 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors shadow-lg" disabled>Generate Music Video</button>
+                <div id="videoPreview" class="hidden mt-4">
+                    <video id="generatedVideo" class="w-full rounded-lg" controls></video>
+                    <a id="downloadVideo" href="#" download class="mt-2 inline-block text-indigo-400 hover:underline">Download Video</a>
+                </div>
+                <div id="videoError" class="text-red-400 text-sm hidden"></div>
+            </div>
+            <!-- Add Send to Future Me section at the end -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">9. Send to Future Me</h3>
+                <input id="futureEmail" type="email" placeholder="Enter your email" class="w-full bg-gray-700 text-white rounded-lg p-4 mb-4" />
+                <div class="flex gap-4 mb-4">
+                    <button class="futureBtn px-4 py-2 bg-indigo-600 rounded-lg" data-years="1">1 Year</button>
+                    <button class="futureBtn px-4 py-2 bg-indigo-600 rounded-lg" data-years="3">3 Years</button>
+                    <button class="futureBtn px-4 py-2 bg-indigo-600 rounded-lg" data-years="5">5 Years</button>
+                </div>
+                <button id="sendToFutureBtn" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition-colors text-white font-semibold">Send Letter to Future Me</button>
+                <div id="futureMeStatus" class="text-green-400 text-sm hidden mt-2"></div>
+                <div id="futureMeError" class="text-red-400 text-sm hidden mt-2"></div>
             </div>
         </div>
     </div>

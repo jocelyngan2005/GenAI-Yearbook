@@ -18,10 +18,27 @@
         <!-- Progress Bar -->
         <div class="flex items-center justify-center mb-8">
             <div class="w-64 h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div class="h-2 bg-purple-500" style="width: 100%"></div>
+                <div class="h-2 bg-purple-500 animate-pulse" style="width: 100%"></div>
             </div>
-            <span class="ml-4 text-sm text-purple-300">Step 3 of 3</span>
+            <span class="ml-4 text-lg text-purple-300 font-bold tracking-wide">Step 3 of 3</span>
         </div>
+        <h1 class="text-5xl font-extrabold text-center mb-10 bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">AI Creation Pipeline</h1>
+        <div class="max-w-4xl mx-auto bg-gray-900 bg-opacity-90 rounded-3xl shadow-2xl p-10">
+            <!-- Memory Theme Selection -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">1. Choose a Memory Theme</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button class="theme-btn p-4 bg-gray-700 rounded-lg hover:bg-indigo-600 transition-colors" data-theme="graduation">�� Graduation</button>
+                    <button class="theme-btn p-4 bg-gray-700 rounded-lg hover:bg-pink-600 transition-colors" data-theme="idol">🌟 Idol Debut</button>
+                    <button class="theme-btn p-4 bg-gray-700 rounded-lg hover:bg-green-600 transition-colors" data-theme="future">🔮 Future Vision</button>
+                    <button class="theme-btn p-4 bg-gray-700 rounded-lg hover:bg-yellow-600 transition-colors" data-theme="origin">🧬 Origin Story</button>
+                </div>
+            </div>
+            <!-- Time Capsule Message -->
+            <div class="bg-gray-800 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">2. Write a Message to Your Future Self</h3>
+                <div class="space-y-4">
+                    <textarea id="capsuleMessageInput" rows="4" class="w-full bg-gray-700 text-white rounded-lg p-4" placeholder="Write your message here..."></textarea>
         <h1 class="text-4xl font-bold text-center mb-8">AI Creation Pipeline</h1>
         
         <div class="max-w-4xl mx-auto bg-gray-900 rounded-lg p-6">
