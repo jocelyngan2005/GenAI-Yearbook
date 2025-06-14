@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let audioChunks = [];
     let isRecording = false;
     let uploadedAudio = null;
+    let enhancedLetter = '';
 
     // Genre Selection
     const genreOptions = ["pop", "rock", "jazz", "classical", "electronic", "folk", "romantic", "inspirational", "nature", "k-pop"];
@@ -42,13 +43,23 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const data = await response.json();
             if (data.success) {
-                document.getElementById('lyricsInput').value = data.enhanced_text;
-                alert('Your letter has been enhanced!');
+                enhancedLetter = data.enhanced_text;
+                document.getElementById('enhancedLetterOutput').value = enhancedLetter;
+                document.getElementById('enhancedLetterSection').style.display = '';
             } else {
                 alert(data.error || 'Error enhancing letter.');
             }
         } catch (error) {
             alert('Error enhancing letter.');
+        }
+    });
+
+    // Use Enhanced Letter for Email
+    const useEnhancedLetterBtn = document.getElementById('useEnhancedLetterBtn');
+    useEnhancedLetterBtn.addEventListener('click', function() {
+        if (enhancedLetter) {
+            document.getElementById('lyricsInput').value = enhancedLetter;
+            alert('Enhanced letter is now set for sending to your future self!');
         }
     });
 
@@ -393,26 +404,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Send to Future Me
-    let selectedYears = 1;
-    document.querySelectorAll('.futureBtn').forEach(btn => {
+    // Track selected years for future delivery
+    let selectedYears = null;
+    const futureBtns = document.querySelectorAll('.futureBtn');
+    futureBtns.forEach((btn, idx) => {
         btn.addEventListener('click', function() {
-            selectedYears = this.dataset.years;
-            document.querySelectorAll('.futureBtn').forEach(b => b.classList.remove('bg-indigo-800'));
-            this.classList.add('bg-indigo-800');
+            futureBtns.forEach(b => {
+                b.classList.remove('bg-indigo-800', 'text-white', 'ring-2', 'ring-yellow-400');
+                b.classList.add('bg-indigo-600');
+            });
+            this.classList.remove('bg-indigo-600');
+            this.classList.add('bg-indigo-800', 'text-white', 'ring-2', 'ring-yellow-400');
+            selectedYears = parseInt(this.dataset.years);
         });
     });
-    document.getElementById('sendToFutureBtn').addEventListener('click', async function() {
+
+    // Set the first button as selected by default if none is selected
+    if (futureBtns.length > 0 && !selectedYears) {
+        futureBtns[0].classList.remove('bg-indigo-600');
+        futureBtns[0].classList.add('bg-indigo-800', 'text-white', 'ring-2', 'ring-yellow-400');
+        selectedYears = parseInt(futureBtns[0].dataset.years);
+    }
+
+    // When sending to future, require a time selection
+    const sendToFutureBtn = document.getElementById('sendToFutureBtn');
+    sendToFutureBtn.addEventListener('click', async function() {
         const email = document.getElementById('futureEmail').value;
-        const letter = document.getElementById('lyricsInput').value;
+        const letter = enhancedLetter || document.getElementById('lyricsInput').value;
         const mood = document.getElementById('moodSelector').value;
-        
         if (!email || !letter) {
             document.getElementById('futureMeError').textContent = 'Please provide your email and letter.';
             document.getElementById('futureMeError').classList.remove('hidden');
             return;
         }
-
+        if (!selectedYears) {
+            document.getElementById('futureMeError').textContent = 'Please select when you want to receive your letter (1, 3, or 5 years).';
+            document.getElementById('futureMeError').classList.remove('hidden');
+            return;
+        }
         const scheduleType = document.querySelector('.schedule-btn.bg-indigo-800')?.dataset.type;
         let scheduleData = {};
         

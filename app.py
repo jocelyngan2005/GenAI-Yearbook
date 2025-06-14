@@ -14,6 +14,7 @@ import time
 import openai
 import replicate
 import random
+from gtts import gTTS
 
 # Load environment variables
 load_dotenv()
@@ -230,7 +231,6 @@ def generate_voice():
     data = request.json
     text = data.get('text', '')
     voice_id = data.get('voice_id', '21m00Tcm4TlvDq8ikWAM')  # Default voice ID
-    
     try:
         # Generate voice using ElevenLabs
         audio = generate(
@@ -238,21 +238,34 @@ def generate_voice():
             voice=voice_id,
             model="eleven_monolingual_v1"
         )
-        
         # Save the audio file
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"voice_{timestamp}.mp3"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
         with open(filepath, 'wb') as f:
             f.write(audio)
-        
         return jsonify({
             'success': True,
             'filename': filename
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in generate_voice (ElevenLabs): {str(e)}")
+        # Fallback: gTTS (Google Text-to-Speech, direct MP3)
+        try:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            mp3_path = os.path.join(app.config['UPLOAD_FOLDER'], f"voice_{timestamp}_gtts.mp3")
+            tts = gTTS(text)
+            tts.save(mp3_path)
+            filename = os.path.basename(mp3_path)
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'fallback': True,
+                'error': 'AI voiceover fallback using gTTS.'
+            })
+        except Exception as gtts_e:
+            print(f"Error in fallback gTTS: {str(gtts_e)}")
+            return jsonify({'success': False, 'error': 'Voiceover unavailable and fallback failed.'}), 500
 
 @app.route('/generate_music', methods=['POST'])
 def generate_music():
